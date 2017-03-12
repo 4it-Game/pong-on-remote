@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/thuyiya/pong-on-remote/issues"
   },
-  "homepage": "https://github.com/thuyiya/pong-on-remote#readme"
+  "homepage": "https://github.com/thuyiya/pong-on-remote#readme",
+  "dependencies": {
+    "express": "^4.15.2"
+  }
 }
