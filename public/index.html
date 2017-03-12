@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Pong</title>
-    <!--<style>
+    <style>
         canvas {
             display: block;
             position: absolute;
@@ -14,105 +14,11 @@
             left: 0;
             right: 0;
         }
-    </style>-->
+    </style>
 </head>
 
 <body>
-    <script>
-        'use strict';
-        let WIDTH = 700,
-            HEIGHT = 600,
-            pi = Math.PI,
-            canvas,
-            ctx,
-            keystate,
-            player = {
-                x: null,
-                y: null,
-                width: 20,
-                height: 100,
-                update: function() {},
-                draw: function() {
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-                }
-            },
-            ai = {
-                x: null,
-                y: null,
-                width: 20,
-                height: 100,
-                update: function() {},
-                draw: function() {
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-                }
-            },
-
-
-            ball = {
-                x: null,
-                y: null,
-                side: 20,
-                update: function() {},
-                // Draw the ball to the canvas
-                draw: function() {
-                    ctx.fillRect(this.x, this.y, this.side, this.side);
-                }
-            };
-
-        function main() {
-            // create, initiate and append game canvas
-            canvas = document.createElement("canvas");
-            canvas.width = WIDTH;
-            canvas.height = HEIGHT;
-            ctx = canvas.getContext("2d");
-            document.body.appendChild(canvas);
-
-            init(); // initiate game objects
-
-            // game loop function
-            let loop = function() {
-                update();
-                draw();
-
-                window.requestAnimationFrame(loop, canvas);
-            };
-            window.requestAnimationFrame(loop, canvas);
-        }
-
-
-        function init() {
-            player.x = player.width;
-            player.y = (HEIGHT - player.height) / 2;
-
-            ai.x = WIDTH - (player.width + ai.width);
-            ai.y = (HEIGHT - ai.height) / 2;
-
-            ball.x = (WIDTH - ball.side) / 2;
-            ball.y = (HEIGHT - ball.side) / 2;
-        }
-
-
-        function update() {
-            ball.update();
-            player.update();
-            ai.update();
-        }
-
-
-        function draw() {
-            ctx.fillRect(0, 0, WIDTH, HEIGHT);
-            ctx.save();
-            ctx.fillStyle = "#fff";
-            ball.draw();
-            player.draw();
-            ai.draw();
-
-            ctx.restore();
-        }
-
-        // start and run the game
-        main();
-    </script>
+    <script src="JS/index.js"></script>
 </body>
 
 </html>
