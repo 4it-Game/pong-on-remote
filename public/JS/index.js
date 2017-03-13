@@ -23,6 +23,8 @@ let player = {
         update: function() {
             if (keystate[UpArrow]) this.y -= 7;
             if (keystate[DownArrow]) this.y += 7;
+            // keep the paddle inside of the canvas
+            this.y = Math.max(Math.min(this.y, HEIGHT - this.height), 0);
         },
         draw: function() {
             ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -52,13 +54,19 @@ let player = {
         side: 20,
         speed: 5,
 
-        //check where the ball hitting
-        serve: function() {
+        /** 
+         * @param  {number} side 1 right, -1 left
+         * check where the ball hitting
+         */
+        serve: function(side) {
+            // set the x and y position
             var r = Math.random();
             this.x = side === 1 ? player.x : ai.x - this.side;
             this.y = (HEIGHT - this.side) * r;
-
+            // calculate out-angle, higher/lower on the y-axis =>
+            // steeper angle
             var phi = 0.1 * pi * (1 - 2 * r);
+            // set velocity direction and magnitude
             this.vel = {
                 x: side * this.speed * Math.cos(phi),
                 y: this.speed * Math.sin(phi)
@@ -80,12 +88,18 @@ let player = {
                 return ax < bx + side && ay < by + side && bx < ax + aw && by < ay + ah;
             };
 
+            // check againts target paddle to check collision in x
+            // direction
+
             var paddle = this.vel.x < 0 ? player : ai;
             if (AABBIntersect(paddle.x, paddle.y, paddle.width, paddle.height, this.x, this.y, this.side)) {
+
+                // set the x position and calculate reflection angle
                 this.x = paddle === player ? player.x + player.width : ai.x - this.side
                 var n = (this.y + this.side - paddle.y) / (paddle.height + this.side);
                 var phi = 0.25 * pi * (2 * n - 1); //pi/4 = 45
 
+                // calculate smash value and update velocity
                 var smash = Math.abs(phi) > 0.2 * pi ? 1.5 : 1;
                 this.vel.x = smash * (paddle === player ? 1 : -1) * this.speed * Math.cos(phi);
                 this.vel.y = smash * this.speed * Math.sin(phi);
@@ -93,9 +107,7 @@ let player = {
 
             //reset
             if (0 > this.x + this.side || this.x > WIDTH + 20) {
-                setTimeout(function() {
-                    this.serve(paddle == player ? 1 : -1);
-                }, 1000);
+                this.serve(paddle == player ? 1 : -1);
 
             }
         },
@@ -144,13 +156,7 @@ function init() {
     ai.x = WIDTH - (player.width + ai.width);
     ai.y = (HEIGHT - ai.height) / 2;
 
-    ball.x = (WIDTH - ball.side) / 2;
-    ball.y = (HEIGHT - ball.side) / 2;
-
-    ball.vel = {
-        x: ball.speed,
-        y: 0
-    }
+    ball.serve(1);
 }
 
 // game updates
