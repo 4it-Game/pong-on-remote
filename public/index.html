@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <script src="/socket.io/socket.io.js"></script>
     <title>Pong</title>
     <style>
         canvas {
@@ -18,7 +19,90 @@
 </head>
 
 <body>
-    <script src="JS/index.js"></script>
+    <p> Hi, Player</p>
+
+    <!--<body onload="startGame()">-->
+    <!--<script src="JS/index.js"></script>-->
+    <script>
+        // game
+        let WIDTH = 700,
+            HEIGHT = 600,
+            pi = Math.PI;
+        let canvas,
+            ctx,
+            keystate;
+        let UpArrow = 38,
+            DownArrow = 40;
+
+        let score = {
+                vel: 0,
+                x: 20,
+                y: 40,
+                draw: function() {
+                    ctx.fillText('Score ' + this.vel, this.x, this.y);
+                }
+            },
+
+            player = {
+                x: 20,
+                y: null,
+                width: 20,
+                height: 100,
+
+                update: function(pos) {
+                    this.y = pos.y;
+                },
+
+                draw: function() {
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                }
+            };
+
+        function main() {
+            // create, initiate and append game canvas
+            canvas = document.createElement("canvas");
+            canvas.width = WIDTH;
+            canvas.height = HEIGHT;
+            ctx = canvas.getContext("2d");
+            ctx.font = '30px Arial';
+            document.body.appendChild(canvas);
+
+
+
+        }
+
+        function draw() {
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+            ctx.save();
+            ctx.fillStyle = "#fff";
+
+            score.draw();
+            player.draw();
+
+            ctx.restore();
+        }
+
+        main();
+
+
+        // socket
+
+        // let ip = '192.168.1.18', // Your ip
+        //     port = ':4444',
+        //     current_url = window.location.href;
+
+        let socket = io();
+
+        socket.on('newPosition', function(data) {
+            player.update(data)
+            draw();
+        });
+
+        let clickup = function() {
+            console.log("Up Arrow")
+        }
+    </script>
 </body>
+<button onclick="clickup()">Up</button>
 
 </html>

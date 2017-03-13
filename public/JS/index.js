@@ -11,6 +11,7 @@ let canvas,
     keystate;
 let UpArrow = 38,
     DownArrow = 40;
+let score = 0;
 
 /**
  * {Objects} 
@@ -126,6 +127,7 @@ function main() {
     ctx = canvas.getContext("2d");
     document.body.appendChild(canvas);
 
+
     keystate = {};
 
     document.addEventListener("keydown", function(evt) {
@@ -190,5 +192,7 @@ function draw() {
     ctx.restore();
 }
 
-// start and run the game
-main();
+function startGame() {
+    // start and run the game
+    main();
+}
