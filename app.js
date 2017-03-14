@@ -6,31 +6,73 @@ const express = require('express'),
     port = 4444;
 
 let SOCKET_LIST = {};
+let PLAYER_LIST = {};
+
+let Player = (id) => {
+    let self = {
+        x: 20,
+        y: 100,
+        id: id,
+        pressingRight: false,
+        pressingLeft: false,
+        pressingUp: false,
+        pressingDown: false,
+        speed: 10,
+    }
+
+    self.updatePosition = () => {
+        if (self.pressingRight)
+            self.x += self.speed;
+        if (self.pressingLeft)
+            self.x -= self.speed;
+        if (self.pressingUp)
+            self.y -= self.speed;
+        if (self.pressingDown)
+            self.y += self.speed;
+    }
+
+    return self;
+}
 
 // Instantiate Socket.IO hand have it listen on the Express/HTTP server
 var io = require('socket.io').listen(server);
 
 io.sockets.on('connection', function(socket) {
     socket.id = Math.random();
-    socket.x = 0;
-    socket.y = 0;
     SOCKET_LIST[socket.id] = socket;
 
+    let player = Player(socket.id);
+    PLAYER_LIST[socket.id] = player;
+
     socket.on('disconnect', () => {
-        delete SOCKET_LIST[socket.io];
+        delete SOCKET_LIST[socket.id];
+        delete PLAYER_LIST[socket.id];
+    });
+
+    socket.on('keyPrerss', (event) => {
+        if (event.inputId === 'left')
+            player.pressingLeft = event.state;
+        if (event.inputId === 'right')
+            player.pressingRight = event.state;
+        if (event.inputId === 'up')
+            player.pressingUp = event.state;
+        if (event.inputId === 'down')
+            player.pressingDown = event.state;
     });
 
 });
+
 
 //game loop
 
 setInterval(() => {
     var pack = [];
-    for (var i in SOCKET_LIST) {
-        let socket = SOCKET_LIST[i];
-        socket.y++;
+    for (var i in PLAYER_LIST) {
+        let player = PLAYER_LIST[i];
+        player.updatePosition();
         pack.push({
-            y: socket.y
+            x: player.x,
+            y: player.y
         });
     }
 
