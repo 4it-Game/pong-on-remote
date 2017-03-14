@@ -6,48 +6,64 @@ const express = require('express'),
     port = 4444;
 
 let SOCKET_LIST = {};
-let PLAYER_LIST = {};
 
-let Player = (id) => {
+let Entity = () => {
     let self = {
-        x: 20,
-        y: 100,
-        id: id,
-        pressingRight: false,
-        pressingLeft: false,
-        pressingUp: false,
-        pressingDown: false,
-        speed: 10,
+        x: 250,
+        y: 250,
+        spdX: 0,
+        spdY: 0,
+        id: "",
     }
-
+    self.update = () => {
+        self.updatePosition();
+    }
     self.updatePosition = () => {
-        if (self.pressingRight)
-            self.x += self.speed;
-        if (self.pressingLeft)
-            self.x -= self.speed;
-        if (self.pressingUp)
-            self.y -= self.speed;
-        if (self.pressingDown)
-            self.y += self.speed;
+        self.x += self.spdX;
+        self.y += self.spdY;
     }
-
     return self;
 }
 
-// Instantiate Socket.IO hand have it listen on the Express/HTTP server
-var io = require('socket.io').listen(server);
+let Player = (id) => {
+    let self = Entity()
+    self.id = id;
+    self.pressingRight = false;
+    self.pressingLeft = false;
+    self.pressingUp = false;
+    self.pressingDown = false;
+    self.speed = 10;
 
-io.sockets.on('connection', function(socket) {
-    socket.id = Math.random();
-    SOCKET_LIST[socket.id] = socket;
+    let super_update = self.update;
+    self.update = () => {
+        self.updateSpd();
+        super_update();
+    }
 
+    self.updateSpd = () => {
+        if (self.pressingRight)
+            self.spdX = self.speed;
+        else if (self.pressingLeft)
+            self.spdX = -self.speed;
+        else
+            self.spdX = 0;
+
+        if (self.pressingUp)
+            self.spdY = -self.speed;
+        else if (self.pressingDown)
+            self.spdY = self.speed;
+        else self.spdY = 0;
+    }
+    Player.list[id] = self;
+    return self;
+}
+
+Player.list = {};
+
+// creating player depending on socket id
+
+Player.onConnect = (socket) => {
     let player = Player(socket.id);
-    PLAYER_LIST[socket.id] = player;
-
-    socket.on('disconnect', () => {
-        delete SOCKET_LIST[socket.id];
-        delete PLAYER_LIST[socket.id];
-    });
 
     socket.on('keyPrerss', (event) => {
         if (event.inputId === 'left')
@@ -59,6 +75,44 @@ io.sockets.on('connection', function(socket) {
         if (event.inputId === 'down')
             player.pressingDown = event.state;
     });
+}
+
+Player.update = () => {
+    var pack = [];
+    for (var i in Player.list) {
+        let player = Player.list[i];
+        player.update();
+        pack.push({
+            x: player.x,
+            y: player.y
+        });
+    }
+    return pack;
+}
+
+// When the player disconnect remove hi from the list
+
+Player.onDisconnect = (socket) => {
+    delete Player.list[socket.id];
+}
+
+// Instantiate Socket.IO hand have it listen on the Express/HTTP server
+var io = require('socket.io').listen(server);
+
+//start client connect here
+
+io.sockets.on('connection', function(socket) {
+    socket.id = Math.random();
+    SOCKET_LIST[socket.id] = socket;
+
+    // Player connect
+    Player.onConnect(socket);
+
+    socket.on('disconnect', () => {
+        delete SOCKET_LIST[socket.id];
+        Player.onDisconnect(socket);
+
+    });
 
 });
 
@@ -66,15 +120,8 @@ io.sockets.on('connection', function(socket) {
 //game loop
 
 setInterval(() => {
-    var pack = [];
-    for (var i in PLAYER_LIST) {
-        let player = PLAYER_LIST[i];
-        player.updatePosition();
-        pack.push({
-            x: player.x,
-            y: player.y
-        });
-    }
+
+    let pack = Player.update()
 
     for (let i in SOCKET_LIST) {
         let socket = SOCKET_LIST[i];
