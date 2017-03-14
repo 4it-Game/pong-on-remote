@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <script src="/socket.io/socket.io.js"></script>
     <title>Pong</title>
     <style>
         canvas {
@@ -18,7 +19,67 @@
 </head>
 
 <body>
-    <script src="JS/index.js"></script>
+    <p> Hi, Player</p>
+    <canvas id="ctx" width="700" height="600" style="border: 1px solid #000000"> </canvas>
+    <script>
+        let socket = io();
+
+        let ctx = document.getElementById("ctx").getContext("2d");
+        ctx.font = "30px Arial";
+
+        socket.on('newPosition', function(data) {
+            ctx.clearRect(0, 0, 700, 600);
+            for (var i = 0; i < data.length; i++) {
+                ctx.fillText('x', data[i].x, data[i].y);
+            }
+        });
+
+        document.onkeydown = function(event) {
+            if (event.keyCode === 68)
+                socket.emit('keyPrerss', {
+                    inputId: 'right',
+                    state: true
+                });
+            if (event.keyCode === 83)
+                socket.emit('keyPrerss', {
+                    inputId: 'down',
+                    state: true
+                });
+            if (event.keyCode === 65)
+                socket.emit('keyPrerss', {
+                    inputId: 'left',
+                    state: true
+                });
+            if (event.keyCode === 87)
+                socket.emit('keyPrerss', {
+                    inputId: 'up',
+                    state: true
+                })
+        }
+
+        document.onkeyup = function(event) {
+            if (event.keyCode === 68)
+                socket.emit('keyPrerss', {
+                    inputId: 'right',
+                    state: false
+                });
+            if (event.keyCode === 83)
+                socket.emit('keyPrerss', {
+                    inputId: 'down',
+                    state: false
+                });
+            if (event.keyCode === 65)
+                socket.emit('keyPrerss', {
+                    inputId: 'left',
+                    state: false
+                });
+            if (event.keyCode === 87)
+                socket.emit('keyPrerss', {
+                    inputId: 'up',
+                    state: false
+                })
+        }
+    </script>
 </body>
 
 </html>
