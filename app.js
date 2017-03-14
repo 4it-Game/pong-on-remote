@@ -11,24 +11,32 @@ let SOCKET_LIST = {};
 var io = require('socket.io').listen(server);
 
 io.sockets.on('connection', function(socket) {
-
     socket.id = Math.random();
     socket.x = 0;
     socket.y = 0;
     SOCKET_LIST[socket.id] = socket;
 
+    socket.on('disconnect', () => {
+        delete SOCKET_LIST[socket.io];
+    });
+
 });
 
+//game loop
 
 setInterval(() => {
+    var pack = [];
     for (var i in SOCKET_LIST) {
         let socket = SOCKET_LIST[i];
-        // socket.x++;
         socket.y++;
-        socket.emit('newPosition', {
-            x: socket.x,
+        pack.push({
             y: socket.y
         });
+    }
+
+    for (let i in SOCKET_LIST) {
+        let socket = SOCKET_LIST[i];
+        socket.emit('newPosition', pack);
     }
 }, 1000 / 25);
 

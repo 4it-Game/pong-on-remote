@@ -67,7 +67,14 @@
             ctx.font = '30px Arial';
             document.body.appendChild(canvas);
 
+            keystate = {};
 
+            document.addEventListener("keydown", function(evt) {
+                keystate[evt.keyCode] = true;
+            });
+            document.addEventListener("keyup", function(evt) {
+                delete keystate[evt.keyCode];
+            });
 
         }
 
@@ -94,15 +101,18 @@
         let socket = io();
 
         socket.on('newPosition', function(data) {
-            player.update(data)
-            draw();
+            // ctx.clearRect(0, 0, WIDTH, HEIGHT);
+            for (let i = 0; i < data.length; i++) {
+                player.update(data[i])
+                draw();
+            }
+
+            // draw();
         });
 
-        let clickup = function() {
-            console.log("Up Arrow")
-        }
+        socket.emit('disconnect');
     </script>
 </body>
-<button onclick="clickup()">Up</button>
+<!--<button onclick="clickup()">Up</button>-->
 
 </html>
