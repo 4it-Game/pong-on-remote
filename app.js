@@ -22,6 +22,9 @@ let Entity = () => {
         self.x += self.spdX;
         self.y += self.spdY;
     }
+    self.getDistance = (pt) => {
+        return Math.sqrt(Math.pow(self.x - pt.x, 2) + Math.pow(self.y - pt.y, 2));
+    }
     return self;
 }
 
@@ -32,12 +35,23 @@ let Player = (id) => {
     self.pressingLeft = false;
     self.pressingUp = false;
     self.pressingDown = false;
+    self.pressingAttack = false;
+    self.mouseAngale = 0;
     self.speed = 10;
 
     let super_update = self.update;
     self.update = () => {
         self.updateSpd();
         super_update();
+
+        if (self.pressingAttack) {
+            self.shootBullet(self.mouseAngale);
+        }
+    }
+    self.shootBullet = (angale) => {
+        let b = Bullet(self.id, angale);
+        b.x = self.x;
+        b.y = self.y;
     }
 
     self.updateSpd = () => {
@@ -65,7 +79,7 @@ Player.list = {};
 Player.onConnect = (socket) => {
     let player = Player(socket.id);
 
-    socket.on('keyPrerss', (event) => {
+    socket.on('keyPress', (event) => {
         if (event.inputId === 'left')
             player.pressingLeft = event.state;
         if (event.inputId === 'right')
@@ -74,6 +88,10 @@ Player.onConnect = (socket) => {
             player.pressingUp = event.state;
         if (event.inputId === 'down')
             player.pressingDown = event.state;
+        if (event.inputId === 'attack')
+            player.pressingAttack = event.state;
+        if (event.inputId === 'mouseAngle')
+            player.mouseAngale = event.state;
     });
 }
 
@@ -90,10 +108,75 @@ Player.update = () => {
     return pack;
 }
 
+//Bulert
+
+let Bullet = (parent, angle) => {
+    let self = Entity();
+    self.id = Math.random();
+    self.spdX = Math.cos(angle / 180 * Math.PI) * 10;
+    self.spdY = Math.sin(angle / 180 * Math.PI) * 10;
+    self.parent = parent;
+    self.timer = 0;
+    self.toRomove = false;
+    let super_update = self.update;
+    self.update = () => {
+        if (self.timer++ > 50)
+            self.toRomove = true;
+        super_update();
+
+        for (var i in Player.list) {
+            let p = Player.list[i];
+            if (self.getDistance(p) < 32 && self.parent !== p.id) {
+                self.toRomove = true;
+            }
+
+        }
+    }
+    Bullet.list[self.id] = self
+    return self;
+}
+
+Bullet.list = {};
+
+Bullet.update = () => {
+    var pack = [];
+    for (var i in Bullet.list) {
+        let bullet = Bullet.list[i];
+        bullet.update();
+        if (bullet.toRomove)
+            delete Bullet.list[i]
+        else
+            pack.push({
+                x: bullet.x,
+                y: bullet.y
+            });
+    }
+    return pack;
+}
+
 // When the player disconnect remove hi from the list
 
 Player.onDisconnect = (socket) => {
     delete Player.list[socket.id];
+}
+
+let DEBUG = true;
+
+let USERS = {
+    "qqq": "asd",
+    "www": "asd"
+}
+
+let isValidPassword = (data) => {
+    return USERS[data.username] === data.password;
+}
+
+let isExist = (data) => {
+    return USERS[data.username];
+}
+
+let addUser = (data) => {
+    USERS[data.username] = data.password;
 }
 
 // Instantiate Socket.IO hand have it listen on the Express/HTTP server
@@ -105,13 +188,39 @@ io.sockets.on('connection', function(socket) {
     socket.id = Math.random();
     SOCKET_LIST[socket.id] = socket;
 
-    // Player connect
-    Player.onConnect(socket);
+    socket.on('signIn', (data) => {
+        if (isValidPassword(data)) {
+            // Player connect
+            Player.onConnect(socket);
+            socket.emit('signInResponce', { success: true });
+        } else {
+            socket.emit('signInResponce', { success: false });
+        }
+    });
+    socket.on('signUp', (data) => {
+        if (isExist(data)) {
+            socket.emit('signUpResponce', { success: false });
+        } else {
+            addUser(data);
+            socket.emit('signUpResponce', { success: true });
+        }
+    });
 
     socket.on('disconnect', () => {
         delete SOCKET_LIST[socket.id];
         Player.onDisconnect(socket);
 
+    });
+
+    //chat server
+    socket.on('sendMessageToServer', (msg) => {
+        let playerName = ("" + socket.id).slice(2, 7);
+        for (let i in SOCKET_LIST)
+            SOCKET_LIST[i].emit('addToChat', playerName + ': ' + msg);
+    });
+    socket.on('evalServer', (data) => {
+        let res = eval(data);
+        socket.emit('evalAnswer', res);
     });
 
 });
@@ -121,13 +230,19 @@ io.sockets.on('connection', function(socket) {
 
 setInterval(() => {
 
-    let pack = Player.update()
+    let pack = {
+        player: Player.update(),
+        bullet: Bullet.update()
+    }
 
     for (let i in SOCKET_LIST) {
         let socket = SOCKET_LIST[i];
         socket.emit('newPosition', pack);
     }
 }, 1000 / 25);
+
+
+
 
 app.use(express.static(__dirname + '/public'));
 
