@@ -5,6 +5,10 @@ const express = require('express'),
     server = http.createServer(app),
     port = 4444;
 
+const mongoose = require('mongoose');
+mongoose.connect('localhost:27017/myGame');
+let account = require('./models/users');
+
 let SOCKET_LIST = {};
 
 let Entity = () => {
@@ -68,7 +72,17 @@ let Player = (id) => {
             self.spdY = self.speed;
         else self.spdY = 0;
     }
+    self.getInitPack = () => {
+        return {
+            id: self.id,
+            x: self.x,
+            y: self.y
+        }
+    }
+
     Player.list[id] = self;
+
+    initPack.player.push(self.getInitPack());
     return self;
 }
 
@@ -95,12 +109,20 @@ Player.onConnect = (socket) => {
     });
 }
 
+// When the player disconnect remove hi from the list
+
+Player.onDisconnect = (socket) => {
+    delete Player.list[socket.id];
+    removePack.player.push(socket.id);
+}
+
 Player.update = () => {
     var pack = [];
     for (var i in Player.list) {
         let player = Player.list[i];
         player.update();
         pack.push({
+            id: player.id,
             x: player.x,
             y: player.y
         });
@@ -133,6 +155,11 @@ let Bullet = (parent, angle) => {
         }
     }
     Bullet.list[self.id] = self
+    initPack.bullet.push({
+        id: self.id,
+        x: self.x,
+        y: self.y
+    });
     return self;
 }
 
@@ -143,22 +170,21 @@ Bullet.update = () => {
     for (var i in Bullet.list) {
         let bullet = Bullet.list[i];
         bullet.update();
-        if (bullet.toRomove)
-            delete Bullet.list[i]
-        else
+        if (bullet.toRomove) {
+            delete Bullet.list[i];
+            removePack.bullet.push(bullet.id);
+        } else {
             pack.push({
+                id: bullet.id,
                 x: bullet.x,
                 y: bullet.y
             });
+        }
     }
     return pack;
 }
 
-// When the player disconnect remove hi from the list
 
-Player.onDisconnect = (socket) => {
-    delete Player.list[socket.id];
-}
 
 let DEBUG = true;
 
@@ -167,16 +193,43 @@ let USERS = {
     "www": "asd"
 }
 
-let isValidPassword = (data) => {
-    return USERS[data.username] === data.password;
+let isValidPassword = (data, callback) => {
+    account.findOne({
+        username: data.username,
+        password: data.password
+    }, (err, user) => {
+        if (err)
+            callback(false);
+        if (user)
+            callback(true);
+        else
+            callback(false);
+    });
 }
 
-let isExist = (data) => {
-    return USERS[data.username];
+let isExist = (data, callback) => {
+    account.findOne({
+        username: data.username
+    }, (err, user) => {
+        if (err)
+            callback(false);
+        if (user)
+            callback(true);
+        else
+            callback(false);
+    });
+
 }
 
-let addUser = (data) => {
-    USERS[data.username] = data.password;
+let addUser = (data, callback) => {
+    account.create({
+        username: data.username,
+        password: data.password
+    }, (_err, user) => {
+        if (_err)
+            return reject(_err);
+        callback();
+    });
 }
 
 // Instantiate Socket.IO hand have it listen on the Express/HTTP server
@@ -189,21 +242,27 @@ io.sockets.on('connection', function(socket) {
     SOCKET_LIST[socket.id] = socket;
 
     socket.on('signIn', (data) => {
-        if (isValidPassword(data)) {
-            // Player connect
-            Player.onConnect(socket);
-            socket.emit('signInResponce', { success: true });
-        } else {
-            socket.emit('signInResponce', { success: false });
-        }
+        isValidPassword(data, (res) => {
+            if (res) {
+                // Player connect
+                Player.onConnect(socket);
+                socket.emit('signInResponce', { success: true });
+            } else {
+                socket.emit('signInResponce', { success: false });
+            }
+        });
+
     });
     socket.on('signUp', (data) => {
-        if (isExist(data)) {
-            socket.emit('signUpResponce', { success: false });
-        } else {
-            addUser(data);
-            socket.emit('signUpResponce', { success: true });
-        }
+        isExist(data, (res) => {
+            if (res) {
+                socket.emit('signUpResponce', { success: false });
+            } else {
+                addUser(data, () => {
+                    socket.emit('signUpResponce', { success: true });
+                });
+            }
+        });
     });
 
     socket.on('disconnect', () => {
@@ -225,20 +284,26 @@ io.sockets.on('connection', function(socket) {
 
 });
 
+let initPack = { player: [], bullet: [] };
+let removePack = { player: [], bullet: [] };
 
 //game loop
 
 setInterval(() => {
-
     let pack = {
         player: Player.update(),
         bullet: Bullet.update()
     }
-
     for (let i in SOCKET_LIST) {
         let socket = SOCKET_LIST[i];
-        socket.emit('newPosition', pack);
+        socket.emit('init', initPack);
+        socket.emit('update', pack);
+        socket.emit('remove', removePack);
     }
+    initPack.player = [];
+    initPack.bullet = [];
+    removePack.player = [];
+    removePack.bullet = [];
 }, 1000 / 25);
 
 

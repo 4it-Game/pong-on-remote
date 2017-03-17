@@ -21,6 +21,7 @@
   "homepage": "https://github.com/thuyiya/pong-on-remote#readme",
   "dependencies": {
     "express": "^4.15.2",
+    "mongoose": "^4.9.0",
     "socket.io": "^1.7.3",
     "uuid": "^3.0.1"
   }
