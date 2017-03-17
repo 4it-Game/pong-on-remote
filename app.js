@@ -79,9 +79,15 @@ let Player = (id) => {
             y: self.y
         }
     }
+    self.getUpdatePack = () => {
+        return {
+            id: self.id,
+            x: self.x,
+            y: self.y
+        }
+    }
 
     Player.list[id] = self;
-
     initPack.player.push(self.getInitPack());
     return self;
 }
@@ -107,6 +113,19 @@ Player.onConnect = (socket) => {
         if (event.inputId === 'mouseAngle')
             player.mouseAngale = event.state;
     });
+
+    let players = [];
+    let bullets = [];
+    for (var i in Player.list) {
+        players.push(Player.list[i].getInitPack());
+    }
+    for (var i in Bullet.list) {
+        bullets.push(Bullet.list[i].getInitPack());
+    }
+    socket.emit('init', {
+        player: players,
+        bullet: bullets
+    });
 }
 
 // When the player disconnect remove hi from the list
@@ -121,11 +140,7 @@ Player.update = () => {
     for (var i in Player.list) {
         let player = Player.list[i];
         player.update();
-        pack.push({
-            id: player.id,
-            x: player.x,
-            y: player.y
-        });
+        pack.push(player.getUpdatePack());
     }
     return pack;
 }
@@ -154,12 +169,23 @@ let Bullet = (parent, angle) => {
 
         }
     }
+    self.getInitPack = () => {
+        return {
+            id: self.id,
+            x: self.x,
+            y: self.y
+        }
+    }
+    self.getUpdatePack = () => {
+        return {
+            id: self.id,
+            x: self.x,
+            y: self.y
+        }
+    }
+
     Bullet.list[self.id] = self
-    initPack.bullet.push({
-        id: self.id,
-        x: self.x,
-        y: self.y
-    });
+    initPack.bullet.push(self.getInitPack());
     return self;
 }
 
@@ -174,11 +200,7 @@ Bullet.update = () => {
             delete Bullet.list[i];
             removePack.bullet.push(bullet.id);
         } else {
-            pack.push({
-                id: bullet.id,
-                x: bullet.x,
-                y: bullet.y
-            });
+            pack.push(bullet.getUpdatePack());
         }
     }
     return pack;
