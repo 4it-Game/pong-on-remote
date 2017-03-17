@@ -14,13 +14,13 @@
         <button id="signDiv-signUp">Sign Up</button>
     </div>
     <div id="gameDiv" style="display: none">
-        <canvas id="ctx" width="700" height="600" style="border: 1px solid #000000"> </canvas>
+        <canvas id="ctx" width="700" height="600" style="border: 4px solid #000000"> </canvas>
 
-        <div id="chat-text" style="width: 500px;height: 100px;overflow-y: scroll">
+        <div id="chat-text" style="width: 700px;height: 100px;overflow-y: scroll">
             <div>Hello!</div>
         </div>
         <form id="chat-form" style="padding-top: 10px">
-            <input type="text" id="chat-input" style="width: 500px;height: 20px" placeholder="Enter">
+            <input type="text" id="chat-input" style="width: 600px;height: 20px" placeholder="Enter">
         </form>
     </div>
 
@@ -69,7 +69,7 @@
             chatForm = document.getElementById('chat-form');
         // game
         let ctx = document.getElementById("ctx").getContext("2d");
-        ctx.font = "30px Arial";
+        ctx.font = "14px Calibri";
 
         /**
          * {Player}
@@ -80,6 +80,23 @@
             self.id = initPack.id;
             self.x = initPack.x;
             self.y = initPack.y;
+            self.width = 20;
+            self.height = 20;
+            self.hp = initPack.hp;
+            self.hpMax = initPack.hpMax;
+            self.score = initPack.score;
+
+            self.draw = function() {
+                let hpWidth = 30 * self.hp / self.hpMax;
+                ctx.beginPath();
+                ctx.lineWidth = "4";
+                ctx.rect(self.x, self.y, self.width, self.height);
+                ctx.stroke();
+                ctx.fillRect(self.x + 5, self.y + 5, 10, 10);
+                // ctx.fillRect(self.x, self.y, self.width, self.height);
+                ctx.fillText(self.score, self.x + 5, self.y - 10);
+            }
+
             Player.list[self.id] = self;
             return self;
         }
@@ -95,6 +112,11 @@
             self.id = initPack.id;
             self.x = initPack.x;
             self.y = initPack.y;
+
+            self.draw = function() {
+                ctx.fillRect(self.x + 5, self.y + 5, 8, 8);
+            }
+
             Bullet.list[self.id] = self;
             return self;
         }
@@ -121,6 +143,10 @@
                         p.x = pack.x;
                     if (pack.y !== undefined)
                         p.y = pack.y;
+                    if (pack.hp !== undefined)
+                        p.hp = pack.hp;
+                    if (pack.score !== undefined)
+                        p.score = pack.score;
                 }
             }
             for (var i = 0; i < data.bullet.length; i++) {
@@ -148,11 +174,11 @@
         setInterval(function() {
             ctx.clearRect(0, 0, 700, 600);
             for (let i in Player.list)
-                ctx.fillRect(Player.list[i].x, Player.list[i].y, 20, 20);
+                Player.list[i].draw();
 
             for (var i in Bullet.list)
-                ctx.fillRect(Bullet.list[i].x - 5, Bullet.list[i].y - 5, 8, 8);
-        })
+                Bullet.list[i].draw();
+        }, 40);
 
         //res of input
         socket.on('addToChat', function(data) {

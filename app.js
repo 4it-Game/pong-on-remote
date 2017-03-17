@@ -13,8 +13,8 @@ let SOCKET_LIST = {};
 
 let Entity = () => {
     let self = {
-        x: 250,
-        y: 250,
+        x: 350,
+        y: 300,
         spdX: 0,
         spdY: 0,
         id: "",
@@ -42,6 +42,9 @@ let Player = (id) => {
     self.pressingAttack = false;
     self.mouseAngale = 0;
     self.speed = 10;
+    self.hp = 10;
+    self.hpMax = 10;
+    self.score = 0;
 
     let super_update = self.update;
     self.update = () => {
@@ -76,14 +79,20 @@ let Player = (id) => {
         return {
             id: self.id,
             x: self.x,
-            y: self.y
+            y: self.y,
+            hp: self.hp,
+            hpMax: self.hpMax,
+            score: self.score
         }
     }
     self.getUpdatePack = () => {
         return {
             id: self.id,
             x: self.x,
-            y: self.y
+            y: self.y,
+            hp: self.hp,
+            score: self.score
+
         }
     }
 
