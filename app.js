@@ -13,8 +13,8 @@ let SOCKET_LIST = {};
 
 let Entity = () => {
     let self = {
-        x: 350,
-        y: 300,
+        x: Math.random() * 500,
+        y: Math.random() * 500,
         spdX: 0,
         spdY: 0,
         id: "",
@@ -173,6 +173,15 @@ let Bullet = (parent, angle) => {
         for (var i in Player.list) {
             let p = Player.list[i];
             if (self.getDistance(p) < 32 && self.parent !== p.id) {
+                p.hp -= 0.5;
+                if (p.hp <= 0) {
+                    let shooter = Player.list[self.parent];
+                    if (shooter)
+                        shooter.score += 1;
+                    p.hp = p.hpMax;
+                    p.x = Math.random() * 500;
+                    p.y = Math.random() * 500;
+                }
                 self.toRomove = true;
             }
 

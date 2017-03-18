@@ -87,14 +87,14 @@
             self.score = initPack.score;
 
             self.draw = function() {
-                let hpWidth = 30 * self.hp / self.hpMax;
+                let hpWidth = 20 * self.hp / self.hpMax;
                 ctx.beginPath();
                 ctx.lineWidth = "4";
                 ctx.rect(self.x, self.y, self.width, self.height);
                 ctx.stroke();
-                ctx.fillRect(self.x + 5, self.y + 5, 10, 10);
+                ctx.fillRect(self.x, self.y, hpWidth, hpWidth);
                 // ctx.fillRect(self.x, self.y, self.width, self.height);
-                ctx.fillText(self.score, self.x + 5, self.y - 10);
+                ctx.fillText(self.score, self.x + 10, self.y - 8);
             }
 
             Player.list[self.id] = self;
