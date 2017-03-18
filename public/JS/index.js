@@ -1,198 +1,248 @@
-'use strict';
+let socket = io();
+
+//sign
+let signDiv = document.getElementById('signDiv'),
+    signDivUsername = document.getElementById('signDiv-username'),
+    signDivPassword = document.getElementById('signDiv-password'),
+    signIn = document.getElementById('signDiv-signIn'),
+    signUp = document.getElementById('signDiv-signUp');
+
+signIn.onclick = function() {
+    socket.emit('signIn', {
+        username: signDivUsername.value,
+        password: signDivPassword.value
+    });
+};
+signUp.onclick = function() {
+    socket.emit('signUp', {
+        username: signDivUsername.value,
+        password: signDivPassword.value
+    });
+};
+socket.on('signInResponce', function(data) {
+    if (data.success) {
+        signDiv.style.display = 'none';
+        gameDiv.style.display = 'inline-block';
+    } else {
+        alert('Sign in Unsuccessful.');
+    }
+});
+socket.on('signUpResponce', function(data) {
+    if (data.success) {
+        alert('Sign Up Successful.');
+    } else {
+        alert('Sign Up Unsuccessful.');
+    }
+});
+
+//image
+let Img = {};
+Img.player = new Image();
+Img.player.src = '/assert/img/player.png';
+Img.bullet = new Image();
+Img.bullet.src = '/assert/img/bullet.png';
+Img.map = new Image();
+Img.map.src = '/assert/img/map.png';
+
+let chatText = document.getElementById('chat-text'),
+    chatInput = document.getElementById('chat-input'),
+    chatForm = document.getElementById('chat-form');
+// game
+let ctx = document.getElementById("ctx").getContext("2d");
+ctx.font = "14px Calibri";
 
 /**
- * Constants 
+ * {Player}
  */
-let WIDTH = 700,
-    HEIGHT = 600,
-    pi = Math.PI;
-let canvas,
-    ctx,
-    keystate;
-let UpArrow = 38,
-    DownArrow = 40;
-let score = 0;
 
-/**
- * {Objects} 
- */
-let player = {
-        x: null,
-        y: null,
-        width: 20,
-        height: 100,
-        update: function() {
-            if (keystate[UpArrow]) this.y -= 7;
-            if (keystate[DownArrow]) this.y += 7;
-            // keep the paddle inside of the canvas
-            this.y = Math.max(Math.min(this.y, HEIGHT - this.height), 0);
-        },
-        draw: function() {
-            ctx.fillRect(this.x, this.y, this.width, this.height);
-        }
-    },
-    ai = {
-        x: null,
-        y: null,
-        width: 20,
-        height: 100,
-        update: function() {
-            // calculate ideal position
-            var des = ball.y - (this.height - ball.side) * 0.5;
-            // ease the movement towards the ideal position
-            this.y += (des - this.y) * 0.1;
-            // keep the paddle inside of the canvas
-            this.y = Math.max(Math.min(this.y, HEIGHT - this.height), 0);
-        },
-        draw: function() {
-            ctx.fillRect(this.x, this.y, this.width, this.height);
-        }
-    },
-    ball = {
-        x: null,
-        y: null,
-        vel: null,
-        side: 20,
-        speed: 5,
+let Player = function(initPack) {
+    let self = {};
+    self.id = initPack.id;
+    self.x = initPack.x;
+    self.y = initPack.y;
+    self.width = 20;
+    self.height = 20;
+    self.hp = initPack.hp;
+    self.hpMax = initPack.hpMax;
+    self.score = initPack.score;
 
-        /** 
-         * @param  {number} side 1 right, -1 left
-         * check where the ball hitting
-         */
-        serve: function(side) {
-            // set the x and y position
-            var r = Math.random();
-            this.x = side === 1 ? player.x : ai.x - this.side;
-            this.y = (HEIGHT - this.side) * r;
-            // calculate out-angle, higher/lower on the y-axis =>
-            // steeper angle
-            var phi = 0.1 * pi * (1 - 2 * r);
-            // set velocity direction and magnitude
-            this.vel = {
-                x: side * this.speed * Math.cos(phi),
-                y: this.speed * Math.sin(phi)
-            }
-        },
-
-        update: function() {
-            this.x += this.vel.x;
-            this.y += this.vel.y;
-
-            if (0 > this.y || this.y + this.side > HEIGHT) {
-                let offset = this.vel.y < 0 ? 0 - this.y : HEIGHT - (this.y + this.side);
-                this.y += 2 * offset;
-                this.vel.y *= -1;
-            }
-            //check intesect between tho
-            // axis aligned bounding boxex (AABB)
-            let AABBIntersect = function(ax, ay, aw, ah, bx, by, side) {
-                return ax < bx + side && ay < by + side && bx < ax + aw && by < ay + ah;
-            };
-
-            // check againts target paddle to check collision in x
-            // direction
-
-            var paddle = this.vel.x < 0 ? player : ai;
-            if (AABBIntersect(paddle.x, paddle.y, paddle.width, paddle.height, this.x, this.y, this.side)) {
-
-                // set the x position and calculate reflection angle
-                this.x = paddle === player ? player.x + player.width : ai.x - this.side
-                var n = (this.y + this.side - paddle.y) / (paddle.height + this.side);
-                var phi = 0.25 * pi * (2 * n - 1); //pi/4 = 45
-
-                // calculate smash value and update velocity
-                var smash = Math.abs(phi) > 0.2 * pi ? 1.5 : 1;
-                this.vel.x = smash * (paddle === player ? 1 : -1) * this.speed * Math.cos(phi);
-                this.vel.y = smash * this.speed * Math.sin(phi);
-            }
-
-            //reset
-            if (0 > this.x + this.side || this.x > WIDTH + 20) {
-                this.serve(paddle == player ? 1 : -1);
-
-            }
-        },
-        // Draw the ball to the canvas
-        draw: function() {
-            ctx.fillRect(this.x, this.y, this.side, this.side);
-        }
-    };
-
-// Starts the game
-function main() {
-    // create, initiate and append game canvas
-    canvas = document.createElement("canvas");
-    canvas.width = WIDTH;
-    canvas.height = HEIGHT;
-    ctx = canvas.getContext("2d");
-    document.body.appendChild(canvas);
-
-
-    keystate = {};
-
-    document.addEventListener("keydown", function(evt) {
-        keystate[evt.keyCode] = true;
-    });
-    document.addEventListener("keyup", function(evt) {
-        delete keystate[evt.keyCode];
-    });
-
-    // initiate game objects
-    init();
-
-    // game loop
-    let loop = function() {
-        update();
-        draw();
-
-        window.requestAnimationFrame(loop, canvas);
-    };
-    window.requestAnimationFrame(loop, canvas);
-}
-
-// Initatite game objects and set start positions
-function init() {
-    player.x = player.width;
-    player.y = (HEIGHT - player.height) / 2;
-
-    ai.x = WIDTH - (player.width + ai.width);
-    ai.y = (HEIGHT - ai.height) / 2;
-
-    ball.serve(1);
-}
-
-// game updates
-function update() {
-    ball.update();
-    player.update();
-    ai.update();
-}
-
-// Draw game objects
-function draw() {
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    ctx.save();
-    ctx.fillStyle = "#fff";
-
-    ball.draw();
-    player.draw();
-    ai.draw();
-
-
-
-    let w = 4,
-        x = (WIDTH - w) * 0.5,
-        y = 0,
-        step = HEIGHT / 15;
-    while (y < HEIGHT) {
-        ctx.fillRect(x, y + step * 0.25, w, step * 0.5);
-        y += step;
+    self.draw = function() {
+        let hpWidth = 20 * self.hp / self.hpMax;
+        ctx.beginPath();
+        ctx.lineWidth = "4";
+        ctx.rect(self.x, self.y, self.width, self.height);
+        ctx.stroke();
+        ctx.fillRect(self.x, self.y, hpWidth, hpWidth);
+        // ctx.fillRect(self.x, self.y, self.width, self.height);
+        ctx.fillText(self.score, self.x + 10, self.y - 8);
     }
 
-    ctx.restore();
+    Player.list[self.id] = self;
+    return self;
 }
 
-function startGame() {
-    // start and run the game
-    main();
+Player.list = {}
+
+/**
+ * {Player}
+ */
+
+let Bullet = function(initPack) {
+    let self = {};
+    self.id = initPack.id;
+    self.x = initPack.x;
+    self.y = initPack.y;
+
+    self.draw = function() {
+        ctx.fillRect(self.x + 5, self.y + 5, 8, 8);
+    }
+
+    Bullet.list[self.id] = self;
+    return self;
+}
+
+Bullet.list = {}
+
+//init [When new object created, contains all the data]
+socket.on('init', function(data) {
+    for (let i = 0; i < data.player.length; i++) {
+        new Player(data.player[i]);
+    }
+    for (let i = 0; i < data.bullet.length; i++) {
+        new Bullet(data.bullet[i]);
+    }
+});
+
+//update [defference]
+socket.on('update', function(data) {
+    for (var i = 0; i < data.player.length; i++) {
+        let pack = data.player[i];
+        let p = Player.list[pack.id];
+        if (p) {
+            if (pack.x !== undefined)
+                p.x = pack.x;
+            if (pack.y !== undefined)
+                p.y = pack.y;
+            if (pack.hp !== undefined)
+                p.hp = pack.hp;
+            if (pack.score !== undefined)
+                p.score = pack.score;
+        }
+    }
+    for (var i = 0; i < data.bullet.length; i++) {
+        let pack = data.bullet[i];
+        let p = Bullet.list[pack.id];
+        if (p) {
+            if (pack.x !== undefined)
+                p.x = pack.x;
+            if (pack.y !== undefined)
+                p.y = pack.y;
+        }
+    }
+});
+
+// remove [using id]
+socket.on('remove', function(data) {
+    for (let i = 0; i < data.player.length; i++) {
+        delete Player.list[data.player[i]];
+    }
+    for (let i = 0; i < data.bullet.length; i++) {
+        delete Bullet.list[data.bullet[i]];
+    }
+});
+
+setInterval(function() {
+    ctx.clearRect(0, 0, 700, 600);
+    for (let i in Player.list)
+        Player.list[i].draw();
+
+    for (var i in Bullet.list)
+        Bullet.list[i].draw();
+}, 40);
+
+//res of input
+socket.on('addToChat', function(data) {
+    chatText.innerHTML += '<div>' + data + '</div>';
+    chatText.scrollTop = chatText.scrollHeight;
+});
+socket.on('evalAnswer', function(data) {
+    console.log(data);
+});
+
+chatForm.onsubmit = function(e) {
+    e.preventDefault();
+    if (!chatInput.value.trim() == "")
+        if (chatInput.value[0] === '/')
+            socket.emit('evalServer', chatInput.value.slice(1));
+        else
+            socket.emit('sendMessageToServer', chatInput.value);
+    chatInput.value = '';
+};
+
+document.onkeydown = function(event) {
+    if (event.keyCode === 68)
+        socket.emit('keyPress', {
+            inputId: 'right',
+            state: true
+        });
+    if (event.keyCode === 83)
+        socket.emit('keyPress', {
+            inputId: 'down',
+            state: true
+        });
+    if (event.keyCode === 65)
+        socket.emit('keyPress', {
+            inputId: 'left',
+            state: true
+        });
+    if (event.keyCode === 87)
+        socket.emit('keyPress', {
+            inputId: 'up',
+            state: true
+        })
+}
+
+document.onkeyup = function(event) {
+    if (event.keyCode === 68)
+        socket.emit('keyPress', {
+            inputId: 'right',
+            state: false
+        });
+    if (event.keyCode === 83)
+        socket.emit('keyPress', {
+            inputId: 'down',
+            state: false
+        });
+    if (event.keyCode === 65)
+        socket.emit('keyPress', {
+            inputId: 'left',
+            state: false
+        });
+    if (event.keyCode === 87)
+        socket.emit('keyPress', {
+            inputId: 'up',
+            state: false
+        })
+}
+
+document.onmousedown = function(event) {
+    socket.emit('keyPress', {
+        inputId: 'attack',
+        state: true
+    })
+}
+document.onmouseup = function(event) {
+    socket.emit('keyPress', {
+        inputId: 'attack',
+        state: false
+    })
+}
+document.onmousemove = function(event) {
+    let x = -250 + event.clientX - 8;
+    let y = -250 + event.clientY - 8;
+    let angale = Math.atan2(y, x) / Math.PI * 180;
+    socket.emit('keyPress', {
+        inputId: 'mouseAngle',
+        state: angale
+    });
 }
