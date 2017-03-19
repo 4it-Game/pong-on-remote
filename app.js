@@ -80,6 +80,7 @@ let Player = (id) => {
             id: self.id,
             x: self.x,
             y: self.y,
+            ang: self.mouseAngale,
             hp: self.hp,
             hpMax: self.hpMax,
             score: self.score
@@ -88,6 +89,7 @@ let Player = (id) => {
     self.getUpdatePack = () => {
         return {
             id: self.id,
+            ang: self.mouseAngale,
             x: self.x,
             y: self.y,
             hp: self.hp,
@@ -102,6 +104,13 @@ let Player = (id) => {
 }
 
 Player.list = {};
+Player.getAllInitPack = function() {
+    let players = [];
+    for (var i in Player.list) {
+        players.push(Player.list[i].getInitPack());
+    }
+    return players;
+}
 
 // creating player depending on socket id
 
@@ -123,19 +132,15 @@ Player.onConnect = (socket) => {
             player.mouseAngale = event.state;
     });
 
-    let players = [];
-    let bullets = [];
-    for (var i in Player.list) {
-        players.push(Player.list[i].getInitPack());
-    }
-    for (var i in Bullet.list) {
-        bullets.push(Bullet.list[i].getInitPack());
-    }
+
     socket.emit('init', {
-        player: players,
-        bullet: bullets
+        selfId: socket.id,
+        player: Player.getAllInitPack(),
+        bullet: Bullet.getAllInitPack()
     });
 }
+
+
 
 // When the player disconnect remove hi from the list
 
@@ -208,6 +213,13 @@ let Bullet = (parent, angle) => {
 }
 
 Bullet.list = {};
+Bullet.getAllInitPack = function() {
+    let bullets = [];
+    for (var i in Bullet.list) {
+        bullets.push(Bullet.list[i].getInitPack());
+    }
+    return bullets;
+}
 
 Bullet.update = () => {
     var pack = [];

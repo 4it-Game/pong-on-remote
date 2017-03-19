@@ -6,6 +6,21 @@ let signDiv = document.getElementById('signDiv'),
     signDivPassword = document.getElementById('signDiv-password'),
     signIn = document.getElementById('signDiv-signIn'),
     signUp = document.getElementById('signDiv-signUp');
+//image
+let Img = {};
+Img.player = new Image();
+Img.player.src = '/assert/img/player.png';
+Img.bullet = new Image();
+Img.bullet.src = '/assert/img/bullet.png';
+Img.map = new Image();
+Img.map.src = '/assert/img/map.png';
+
+let chatText = document.getElementById('chat-text'),
+    chatInput = document.getElementById('chat-input'),
+    chatForm = document.getElementById('chat-form');
+// game
+let ctx = document.getElementById("ctx").getContext("2d");
+ctx.font = "bold 18px Calibri";
 
 signIn.onclick = function() {
     socket.emit('signIn', {
@@ -35,21 +50,6 @@ socket.on('signUpResponce', function(data) {
     }
 });
 
-//image
-let Img = {};
-Img.player = new Image();
-Img.player.src = '/assert/img/player.png';
-Img.bullet = new Image();
-Img.bullet.src = '/assert/img/bullet.png';
-Img.map = new Image();
-Img.map.src = '/assert/img/map.png';
-
-let chatText = document.getElementById('chat-text'),
-    chatInput = document.getElementById('chat-input'),
-    chatForm = document.getElementById('chat-form');
-// game
-let ctx = document.getElementById("ctx").getContext("2d");
-ctx.font = "14px Calibri";
 
 /**
  * {Player}
@@ -62,19 +62,34 @@ let Player = function(initPack) {
     self.y = initPack.y;
     self.width = 20;
     self.height = 20;
+    self.angale = 0;
     self.hp = initPack.hp;
     self.hpMax = initPack.hpMax;
     self.score = initPack.score;
 
     self.draw = function() {
-        let hpWidth = 20 * self.hp / self.hpMax;
+        let hpWidth = 40 * self.hp / self.hpMax;
         ctx.beginPath();
-        ctx.lineWidth = "4";
-        ctx.rect(self.x, self.y, self.width, self.height);
-        ctx.stroke();
-        ctx.fillRect(self.x, self.y, hpWidth, hpWidth);
-        // ctx.fillRect(self.x, self.y, self.width, self.height);
-        ctx.fillText(self.score, self.x + 10, self.y - 8);
+        ctx.fillStyle = 'green';
+        ctx.fillRect(self.x - hpWidth / 2, self.y - 30, hpWidth, 4);
+        ctx.closePath();
+        self.rotate();
+    }
+
+    self.rotate = function() {
+        ctx.beginPath();
+        let width = Img.bullet.width * 4;
+        let height = Img.bullet.height * 4;
+        ctx.save();
+        ctx.translate(self.x, self.y);
+        ctx.rotate(self.angale * Math.PI / 180);
+        ctx.translate(-self.x, -self.y);
+        ctx.drawImage(Img.player,
+            0, 0, Img.player.width, Img.player.height,
+            self.x - width / 2, self.y - height / 2, width, height)
+        ctx.closePath();
+        ctx.restore();
+
     }
 
     Player.list[self.id] = self;
@@ -94,7 +109,14 @@ let Bullet = function(initPack) {
     self.y = initPack.y;
 
     self.draw = function() {
-        ctx.fillRect(self.x + 5, self.y + 5, 8, 8);
+        let width = Img.bullet.width * 2 / 3;
+        let height = Img.bullet.height * 2 / 3;
+
+        ctx.drawImage(Img.bullet,
+            0, 0, Img.bullet.width, Img.bullet.height,
+            self.x, self.y, width, height);
+
+        // ctx.fillRect(self.x + 5, self.y + 5, 8, 8);
     }
 
     Bullet.list[self.id] = self;
@@ -103,8 +125,13 @@ let Bullet = function(initPack) {
 
 Bullet.list = {}
 
+let selfId = null;
+
 //init [When new object created, contains all the data]
 socket.on('init', function(data) {
+    if (data.selfId) {
+        selfId = data.selfId;
+    }
     for (let i = 0; i < data.player.length; i++) {
         new Player(data.player[i]);
     }
@@ -127,6 +154,8 @@ socket.on('update', function(data) {
                 p.hp = pack.hp;
             if (pack.score !== undefined)
                 p.score = pack.score;
+            if (pack.ang !== undefined)
+                p.angale = pack.ang;
         }
     }
     for (var i = 0; i < data.bullet.length; i++) {
@@ -153,12 +182,22 @@ socket.on('remove', function(data) {
 
 setInterval(function() {
     ctx.clearRect(0, 0, 700, 600);
+    drawMap();
+    drawScore();
     for (let i in Player.list)
         Player.list[i].draw();
 
     for (var i in Bullet.list)
         Bullet.list[i].draw();
 }, 40);
+
+let drawMap = function() {
+    ctx.drawImage(Img.map, 0, 0);
+}
+
+let drawScore = function() {
+    ctx.fillText(Player.list[selfId] ? Player.list[selfId].score : 0, 10, 30);
+};
 
 //res of input
 socket.on('addToChat', function(data) {
