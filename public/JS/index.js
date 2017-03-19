@@ -196,7 +196,11 @@ let drawMap = function() {
 }
 
 let drawScore = function() {
-    ctx.fillText(Player.list[selfId] ? Player.list[selfId].score : 0, 10, 30);
+    ctx.beginPath();
+    ctx.fillStyle = "Gray";
+    ctx.fillText('SCORE: ' + (Player.list[selfId] ? Player.list[selfId].score : 0), 600, 30);
+    ctx.fill();
+    ctx.closePath();
 };
 
 //res of input
