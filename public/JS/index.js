@@ -222,6 +222,11 @@ chatForm.onsubmit = function(e) {
     chatInput.value = '';
 };
 
+
+/**
+ * Input haddler {Key Board Inputs}
+ */
+
 document.onkeydown = function(event) {
     if (event.keyCode === 68)
         socket.emit('keyPress', {
