@@ -16,7 +16,7 @@ let chatText = document.getElementById('chat-text'),
 // game
 let ctx = document.getElementById("ctx").getContext("2d");
 let ctxUi = document.getElementById("ctx-ui").getContext("2d");
-ctxUi.font = "bold 18px Calibri";
+
 //image
 let Img = {};
 Img.player = new Image();
@@ -89,7 +89,7 @@ let Player = function(initPack) {
 
         let hpWidth = 40 * self.hp / self.hpMax;
         ctx.beginPath();
-        ctx.fillStyle = 'green';
+        ctx.fillStyle = '#c0392b';
         ctx.fillRect(x - hpWidth / 2, y - 30, hpWidth, 4);
         ctx.closePath();
 
@@ -104,6 +104,13 @@ let Player = function(initPack) {
             x - width / 2, y - height / 2, width, height)
         ctx.closePath();
         ctx.restore();
+
+        ctxUi.beginPath();
+        ctxUi.font = "8px Calibri";
+        ctxUi.fillStyle = "#FFD700";
+        ctxUi.fillText(self.username, x - 20, y - 15);
+        ctxUi.fill();
+        ctxUi.closePath();
     }
 
     Player.list[self.id] = self;
@@ -228,15 +235,9 @@ let drawScore = function() {
     lastScore = Player.list[selfId].score
     ctxUi.clearRect(0, 0, 700, 600);
     ctxUi.beginPath();
+    ctxUi.font = "bold 18px Calibri";
     ctxUi.fillStyle = "#3498db";
     ctxUi.fillText('SCORE: ' + Player.list[selfId].score, 20, 30);
-    ctxUi.fill();
-    ctxUi.closePath();
-
-    ctxUi.beginPath();
-    ctxUi.fillStyle = "#e67e22";
-    ctxUi.fillText(Player.list[selfId].username, WIDTH / 2, HEIGHT / 2);
-    ctxUi.font = "12px Calibri";
     ctxUi.fill();
     ctxUi.closePath();
 };
