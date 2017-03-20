@@ -12,8 +12,14 @@ Img.player = new Image();
 Img.player.src = '/assert/img/player.png';
 Img.bullet = new Image();
 Img.bullet.src = '/assert/img/bullet.png';
-Img.map = new Image();
-Img.map.src = '/assert/img/map.png';
+Img.map = {};
+Img.map['block-1'] = new Image();
+Img.map['block-1'].src = '/assert/img/map1.png';
+Img.map['block-2'] = new Image();
+Img.map['block-2'].src = '/assert/img/map2.png';
+
+let WIDTH = 700;
+let HEIGHT = 600;
 
 let chatText = document.getElementById('chat-text'),
     chatInput = document.getElementById('chat-input'),
@@ -66,30 +72,34 @@ let Player = function(initPack) {
     self.hp = initPack.hp;
     self.hpMax = initPack.hpMax;
     self.score = initPack.score;
+    self.map = initPack.map;
+
 
     self.draw = function() {
+        if (Player.list[selfId].map !== self.map)
+            return;
+        let width = Img.bullet.width * 4;
+        let height = Img.bullet.height * 4;
+        let x = self.x - Player.list[selfId].x + WIDTH / 2;
+        let y = self.y - Player.list[selfId].y + HEIGHT / 2;
+
         let hpWidth = 40 * self.hp / self.hpMax;
         ctx.beginPath();
         ctx.fillStyle = 'green';
-        ctx.fillRect(self.x - hpWidth / 2, self.y - 30, hpWidth, 4);
+        ctx.fillRect(x - hpWidth / 2, y - 30, hpWidth, 4);
         ctx.closePath();
-        self.rotate();
-    }
 
-    self.rotate = function() {
+
         ctx.beginPath();
-        let width = Img.bullet.width * 4;
-        let height = Img.bullet.height * 4;
         ctx.save();
-        ctx.translate(self.x, self.y);
+        ctx.translate(x, y);
         ctx.rotate(self.angale * Math.PI / 180);
-        ctx.translate(-self.x, -self.y);
+        ctx.translate(-x, -y);
         ctx.drawImage(Img.player,
             0, 0, Img.player.width, Img.player.height,
-            self.x - width / 2, self.y - height / 2, width, height)
+            x - width / 2, y - height / 2, width, height)
         ctx.closePath();
         ctx.restore();
-
     }
 
     Player.list[self.id] = self;
@@ -107,14 +117,20 @@ let Bullet = function(initPack) {
     self.id = initPack.id;
     self.x = initPack.x;
     self.y = initPack.y;
+    self.map = initPack.map;
 
     self.draw = function() {
-        let width = Img.bullet.width * 2 / 3;
-        let height = Img.bullet.height * 2 / 3;
+        if (Player.list[selfId].map !== self.map)
+            return;
+        let width = Img.bullet.width / 2;
+        let height = Img.bullet.height / 2;
+
+        let x = self.x - Player.list[selfId].x + WIDTH / 2;
+        let y = self.y - Player.list[selfId].y + HEIGHT / 2;
 
         ctx.drawImage(Img.bullet,
             0, 0, Img.bullet.width, Img.bullet.height,
-            self.x, self.y, width, height);
+            x - width / 2, y - height / 2, width, height);
 
         // ctx.fillRect(self.x + 5, self.y + 5, 8, 8);
     }
@@ -181,6 +197,8 @@ socket.on('remove', function(data) {
 });
 
 setInterval(function() {
+    if (!selfId)
+        return;
     ctx.clearRect(0, 0, 700, 600);
     drawMap();
     drawScore();
@@ -192,13 +210,17 @@ setInterval(function() {
 }, 40);
 
 let drawMap = function() {
-    ctx.drawImage(Img.map, 0, 0);
+    let player = Player.list[selfId];
+    var x = WIDTH / 2 - player.x;
+    var y = HEIGHT / 2 - player.y;
+
+    ctx.drawImage(Img.map[player.map], x, y);
 }
 
 let drawScore = function() {
     ctx.beginPath();
     ctx.fillStyle = "Gray";
-    ctx.fillText('SCORE: ' + (Player.list[selfId] ? Player.list[selfId].score : 0), 600, 30);
+    ctx.fillText('SCORE: ' + Player.list[selfId].score, 600, 30);
     ctx.fill();
     ctx.closePath();
 };

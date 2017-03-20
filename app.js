@@ -11,14 +11,25 @@ let account = require('./models/users');
 
 let SOCKET_LIST = {};
 
-let Entity = () => {
+let Entity = (params) => {
     let self = {
         x: Math.random() * 500,
         y: Math.random() * 500,
         spdX: 0,
         spdY: 0,
         id: "",
+        mao: "block-1"
     }
+
+    if (params.x)
+        self.x = params.x;
+    if (params.y)
+        self.y = params.y;
+    if (params.map)
+        self.map = params.map;
+    if (params.id)
+        self.id = params.id;
+
     self.update = () => {
         self.updatePosition();
     }
@@ -32,9 +43,8 @@ let Entity = () => {
     return self;
 }
 
-let Player = (id) => {
-    let self = Entity()
-    self.id = id;
+let Player = (params) => {
+    let self = Entity(params) //super cunstructor
     self.pressingRight = false;
     self.pressingLeft = false;
     self.pressingUp = false;
@@ -56,9 +66,13 @@ let Player = (id) => {
         }
     }
     self.shootBullet = (angale) => {
-        let b = Bullet(self.id, angale);
-        b.x = self.x;
-        b.y = self.y;
+        Bullet({
+            parent: self.id,
+            angale: angale,
+            x: self.x,
+            y: self.y,
+            map: self.map
+        });
     }
 
     self.updateSpd = () => {
@@ -83,7 +97,8 @@ let Player = (id) => {
             ang: self.mouseAngale,
             hp: self.hp,
             hpMax: self.hpMax,
-            score: self.score
+            score: self.score,
+            map: self.map
         }
     }
     self.getUpdatePack = () => {
@@ -98,7 +113,7 @@ let Player = (id) => {
         }
     }
 
-    Player.list[id] = self;
+    Player.list[params.id] = self;
     initPack.player.push(self.getInitPack());
     return self;
 }
@@ -115,7 +130,14 @@ Player.getAllInitPack = function() {
 // creating player depending on socket id
 
 Player.onConnect = (socket) => {
-    let player = Player(socket.id);
+    let map = 'block-1';
+    if (Math.random() < 0.5)
+        map = 'block-2';
+
+    let player = Player({
+        id: socket.id,
+        map: map
+    });
 
     socket.on('keyPress', (event) => {
         if (event.inputId === 'left')
@@ -161,23 +183,24 @@ Player.update = () => {
 
 //Bulert
 
-let Bullet = (parent, angle) => {
-    let self = Entity();
+let Bullet = (params) => {
+    let self = Entity(params);
     self.id = Math.random();
-    self.spdX = Math.cos(angle / 180 * Math.PI) * 10;
-    self.spdY = Math.sin(angle / 180 * Math.PI) * 10;
-    self.parent = parent;
+    self.angale = params.angale;
+    self.spdX = Math.cos(params.angale / 180 * Math.PI) * 10;
+    self.spdY = Math.sin(params.angale / 180 * Math.PI) * 10;
+    self.parent = params.parent;
     self.timer = 0;
     self.toRomove = false;
     let super_update = self.update;
     self.update = () => {
-        if (self.timer++ > 50)
+        if (self.timer++ > 100)
             self.toRomove = true;
         super_update();
 
         for (var i in Player.list) {
             let p = Player.list[i];
-            if (self.getDistance(p) < 32 && self.parent !== p.id) {
+            if (self.map === p.map, self.getDistance(p) < 32 && self.parent !== p.id) {
                 p.hp -= 0.5;
                 if (p.hp <= 0) {
                     let shooter = Player.list[self.parent];
@@ -196,8 +219,9 @@ let Bullet = (parent, angle) => {
         return {
             id: self.id,
             x: self.x,
-            y: self.y
-        }
+            y: self.y,
+            map: self.map
+        };
     }
     self.getUpdatePack = () => {
         return {
@@ -339,6 +363,7 @@ io.sockets.on('connection', function(socket) {
 let initPack = { player: [], bullet: [] };
 let removePack = { player: [], bullet: [] };
 
+
 //game loop
 
 setInterval(() => {
@@ -364,6 +389,6 @@ setInterval(() => {
 app.use(express.static(__dirname + '/public'));
 
 
-server.listen(port, () => {
-    console.log("Listen to port " + port);
+server.listen(process.env.PORT || port, () => {
+    console.log("Listen to port " + process.env.PORT || port);
 });
