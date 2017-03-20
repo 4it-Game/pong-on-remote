@@ -9,19 +9,23 @@
 
 <body>
     <div id="signDiv">
-        Username : <input value="q" type="text" id="signDiv-username"> Password : <input type="text" value="q" id="signDiv-password">
+        Username : <input value="Test User" type="text" id="signDiv-username"> Password : <input type="password" value="test" id="signDiv-password">
         <button id="signDiv-signIn">Sign In</button>
         <button id="signDiv-signUp">Sign Up</button>
     </div>
     <div id="gameDiv" style="display: none">
-        <canvas id="ctx" width="700" height="600" style="border: 4px solid #000000"> </canvas>
-
-        <div id="chat-text" style="width: 700px;height: 100px;overflow-y: scroll">
-            <div>Hello!</div>
+        <canvas id="ctx" width="700" height="600" style="position: absolute; border: 4px solid #000000"> </canvas>
+        <canvas id="ctx-ui" width="700" height="600" style="position: absolute;left: 8px;top: 8px; border: 4px solid #000000"> </canvas>
+        <div style="margin-top: 600px;">
+            <div id="chat-text" style="width: 700px;height: 200px;overflow-y: scroll">
+                <p>dev mode: v0.1.0</p>
+                <div style="margin-bottom: 5px;color: darkcyan">Hi, kollane!</div>
+            </div>
+            <form id="chat-form" style="padding-top: 10px">
+                <input type="text" id="chat-input" style="width: 600px; height: 20px;" placeholder="Enter">
+            </form>
         </div>
-        <form id="chat-form" style="padding-top: 10px">
-            <input type="text" id="chat-input" style="width: 600px;height: 20px" placeholder="Enter">
-        </form>
+
     </div>
     <script src="/JS/index.js"></script>
 </body>

@@ -45,6 +45,7 @@ let Entity = (params) => {
 
 let Player = (params) => {
     let self = Entity(params) //super cunstructor
+    self.username = params.username;
     self.pressingRight = false;
     self.pressingLeft = false;
     self.pressingUp = false;
@@ -98,7 +99,8 @@ let Player = (params) => {
             hp: self.hp,
             hpMax: self.hpMax,
             score: self.score,
-            map: self.map
+            map: self.map,
+            username: self.username
         }
     }
     self.getUpdatePack = () => {
@@ -129,12 +131,13 @@ Player.getAllInitPack = function() {
 
 // creating player depending on socket id
 
-Player.onConnect = (socket) => {
+Player.onConnect = (socket, username) => {
     let map = 'block-1';
     if (Math.random() < 0.5)
         map = 'block-2';
 
     let player = Player({
+        username: username,
         id: socket.id,
         map: map
     });
@@ -321,7 +324,7 @@ io.sockets.on('connection', function(socket) {
         isValidPassword(data, (res) => {
             if (res) {
                 // Player connect
-                Player.onConnect(socket);
+                Player.onConnect(socket, data.username);
                 socket.emit('signInResponce', { success: true });
             } else {
                 socket.emit('signInResponce', { success: false });
@@ -349,9 +352,8 @@ io.sockets.on('connection', function(socket) {
 
     //chat server
     socket.on('sendMessageToServer', (msg) => {
-        let playerName = ("" + socket.id).slice(2, 7);
         for (let i in SOCKET_LIST)
-            SOCKET_LIST[i].emit('addToChat', playerName + ': ' + msg);
+            SOCKET_LIST[i].emit('addToChat', Player.list[socket.id].username + ': ' + msg);
     });
     socket.on('evalServer', (data) => {
         let res = eval(data);
@@ -389,6 +391,6 @@ setInterval(() => {
 app.use(express.static(__dirname + '/public'));
 
 
-server.listen(process.env.PORT || port, () => {
-    console.log("Listen to port " + process.env.PORT || port);
+server.listen(port || process.env.PORT, () => {
+    console.log("Listen to port " + port || process.env.PORT);
 });

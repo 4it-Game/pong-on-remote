@@ -6,6 +6,17 @@ let signDiv = document.getElementById('signDiv'),
     signDivPassword = document.getElementById('signDiv-password'),
     signIn = document.getElementById('signDiv-signIn'),
     signUp = document.getElementById('signDiv-signUp');
+// canvrs
+let WIDTH = 700;
+let HEIGHT = 600;
+
+let chatText = document.getElementById('chat-text'),
+    chatInput = document.getElementById('chat-input'),
+    chatForm = document.getElementById('chat-form');
+// game
+let ctx = document.getElementById("ctx").getContext("2d");
+let ctxUi = document.getElementById("ctx-ui").getContext("2d");
+ctxUi.font = "bold 18px Calibri";
 //image
 let Img = {};
 Img.player = new Image();
@@ -18,15 +29,7 @@ Img.map['block-1'].src = '/assert/img/map1.png';
 Img.map['block-2'] = new Image();
 Img.map['block-2'].src = '/assert/img/map2.png';
 
-let WIDTH = 700;
-let HEIGHT = 600;
 
-let chatText = document.getElementById('chat-text'),
-    chatInput = document.getElementById('chat-input'),
-    chatForm = document.getElementById('chat-form');
-// game
-let ctx = document.getElementById("ctx").getContext("2d");
-ctx.font = "bold 18px Calibri";
 
 signIn.onclick = function() {
     socket.emit('signIn', {
@@ -64,6 +67,7 @@ socket.on('signUpResponce', function(data) {
 let Player = function(initPack) {
     let self = {};
     self.id = initPack.id;
+    self.username = initPack.username;
     self.x = initPack.x;
     self.y = initPack.y;
     self.width = 20;
@@ -218,11 +222,23 @@ let drawMap = function() {
 }
 
 let drawScore = function() {
-    ctx.beginPath();
-    ctx.fillStyle = "Gray";
-    ctx.fillText('SCORE: ' + Player.list[selfId].score, 600, 30);
-    ctx.fill();
-    ctx.closePath();
+    let lastScore = null
+    if (lastScore === Player.list[selfId].score)
+        return;
+    lastScore = Player.list[selfId].score
+    ctxUi.clearRect(0, 0, 700, 600);
+    ctxUi.beginPath();
+    ctxUi.fillStyle = "#3498db";
+    ctxUi.fillText('SCORE: ' + Player.list[selfId].score, 20, 30);
+    ctxUi.fill();
+    ctxUi.closePath();
+
+    ctxUi.beginPath();
+    ctxUi.fillStyle = "#e67e22";
+    ctxUi.fillText(Player.list[selfId].username, WIDTH / 2, HEIGHT / 2);
+    ctxUi.font = "12px Calibri";
+    ctxUi.fill();
+    ctxUi.closePath();
 };
 
 //res of input
