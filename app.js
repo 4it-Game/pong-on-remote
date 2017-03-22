@@ -110,7 +110,8 @@ let Player = (params) => {
             x: self.x,
             y: self.y,
             hp: self.hp,
-            score: self.score
+            score: self.score,
+            map: self.map
 
         }
     }
@@ -155,6 +156,14 @@ Player.onConnect = (socket, username) => {
             player.pressingAttack = event.state;
         if (event.inputId === 'mouseAngle')
             player.mouseAngale = event.state;
+    });
+
+    socket.on('changeMap', (data) => {
+        if (player.map == 'block-1')
+            player.map = 'block-2';
+        else
+            player.map = 'block-1';
+
     });
 
 

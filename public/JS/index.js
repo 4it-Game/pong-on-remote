@@ -29,7 +29,7 @@ Img.map['block-1'].src = '/assert/img/map1.png';
 Img.map['block-2'] = new Image();
 Img.map['block-2'].src = '/assert/img/map2.png';
 
-
+// document.getElementById("gameDiv").style.cursor = "crosshair";
 
 signIn.onclick = function() {
     socket.emit('signIn', {
@@ -183,6 +183,8 @@ socket.on('update', function(data) {
                 p.score = pack.score;
             if (pack.ang !== undefined)
                 p.angale = pack.ang;
+            if (pack.map !== undefined)
+                p.map = pack.map;
         }
     }
     for (var i = 0; i < data.bullet.length; i++) {
@@ -260,6 +262,11 @@ chatForm.onsubmit = function(e) {
             socket.emit('sendMessageToServer', chatInput.value);
     chatInput.value = '';
 };
+
+//UI
+let changeMap = function() {
+    socket.emit('changeMap');
+}
 
 
 /**

@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
     <title>TopDown Shooter</title>
 </head>
 
@@ -13,10 +14,19 @@
         <button id="signDiv-signIn">Sign In</button>
         <button id="signDiv-signUp">Sign Up</button>
     </div>
-    <div id="gameDiv" style="display: none">
-        <canvas id="ctx" width="700" height="600" style="position: absolute; border: 4px solid #000000"> </canvas>
-        <canvas id="ctx-ui" width="700" height="600" style="position: absolute;left: 8px;top: 8px; border: 4px solid #000000"> </canvas>
-        <div style="margin-top: 600px;">
+    <div id="gameDiv" style="display: none; cursor: url(/assert/img/mouse.cur);">
+        <div id="game" style="position: absolute; width: 700px;height: 600px">
+            <canvas id="ctx" width="700" height="600" style="position: absolute; border: 4px solid #000000"> </canvas>
+            <canvas id="ctx-ui" width="700" height="600" style="position: absolute;border: 4px solid #000000"> </canvas>
+
+            <div id="ui" style="position: absolute; width: 700px;height: 600px">
+                <button onclick="changeMap()" style="position: absolute;bottom: 0px;left: 0px">
+                    Change Map
+                </button>
+            </div>
+        </div>
+
+        <div id="belowGame" style="margin-top: 650px;">
             <div id="chat-text" style="width: 700px;height: 200px;overflow-y: scroll">
                 <p>dev mode: v0.1.0</p>
                 <div style="margin-bottom: 5px;color: darkcyan">Hi, kollane!</div>
@@ -27,7 +37,7 @@
         </div>
 
     </div>
-    <script src="/JS/index.js"></script>
+    <script src="/js/index.js"></script>
 </body>
 
 </html>
