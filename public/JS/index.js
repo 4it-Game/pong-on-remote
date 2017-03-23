@@ -13,6 +13,9 @@ let HEIGHT = 600;
 let chatText = document.getElementById('chat-text'),
     chatInput = document.getElementById('chat-input'),
     chatForm = document.getElementById('chat-form');
+
+let ldb = document.getElementById('loaderboard');
+
 // game
 let ctx = document.getElementById("ctx").getContext("2d");
 let ctxUi = document.getElementById("ctx-ui").getContext("2d");

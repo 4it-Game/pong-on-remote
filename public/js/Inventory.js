@@ -91,7 +91,7 @@ Item("potion", "Potion", function(player) {
 });
 
 Item("superAttack", "Raja Attack", function(player) {
-    for (let i = 0; i < 360; i++)
+    for (let i = 0; i < 10; i++)
         player.shootBullet(i);
     player.inventory.removeItem("potion", 1);
     player.inventory.removeItem("superAttack", 1);

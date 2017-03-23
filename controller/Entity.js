@@ -80,7 +80,7 @@ Player = (params) => {
         }
     }
     self.shootBullet = (angale) => {
-        if (Math.random() < 0.10)
+        if (Math.random() < 0.020)
             self.inventory.addItem("potion", 1);
         Bullet({
             parent: self.id,
